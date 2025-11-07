@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-g">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Harshid Engravers - Log Book</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Icons (Lucide) -->
+    <script src="https://unpkg.com/lucide-dev@latest"></script>
+    <link rel="stylesheet" href="style.css">
+    
+</head>
+<body class="h-full text-gray-800 antialiased">
+
+    <!-- Login Overlay -->
+    <div id="loginOverlay" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-100">
+        <div class="w-full max-w-md light-panel p-8">
+            <h2 class="text-3xl font-bold text-center text-indigo-600 mb-6">Harshid Engravers</h2>
+            
+            <!-- REMOVED: Tab Navigation -->
+
+            <!-- Sign In View -->
+            <div id="signInView">
+                <p class="text-center text-gray-600 mb-6">Please sign in to continue</p>
+                <form id="loginForm">
+                    <div class="mb-4">
+                        <label for="userId" class="block text-sm font-medium text-gray-700 mb-2">User ID</label>
+                        <input type="text" id="userId" class="form-input" placeholder="e.g., user@logbook" required>
+                    </div>
+                    <div class="mb-6">
+                        <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                        <input type="password" id="password" class="form-input" placeholder="••••••••" required>
+                    </div>
+                    <p id="loginError" class="text-red-500 text-sm text-center mb-4 hidden"></p>
+                    <button type="submit" id="loginSubmitBtn" class="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg
+                                                 hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-400
+                                                 focus:ring-offset-2 focus:ring-offset-slate-100
+                                                 transition duration-200 transform hover:scale-105">
+                        Sign In
+                    </button>
+                </form>
+                <!-- ADDED: "Create Account" link -->
+                <p class="text-center text-sm text-gray-600 mt-6">
+                    Don't have an account?
+                    <button id="showRegisterView" class="font-medium text-indigo-600 hover:text-indigo-500">
+                        Create one here
+                    </button>
+                </p>
+            </div>
+
+            <!-- Register View -->
+            <div id="registerView" class="hidden">
+                <p class="text-center text-gray-600 mb-6">Create a new user account</p>
+                <form id="registerForm">
+                    <div class="mb-4">
+                        <label for="newRegisterUserId" class="block text-sm font-medium text-gray-700 mb-2">User ID</label>
+                        <input type="text" id="newRegisterUserId" class="form-input" placeholder="e.g., new.user@logbook" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="newRegisterPassword" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                        <input type="password" id="newRegisterPassword" class="form-input" placeholder="••••••••" required>
+                    </div>
+                    <div class="mb-6">
+                        <label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+                        <input type="password" id="confirmPassword" class="form-input" placeholder="••••••••" required>
+                    </div>
+                    <p id="registerError" class="text-red-500 text-sm text-center mb-4 hidden"></p>
+                    <p id="registerSuccess" class="text-green-600 text-sm text-center mb-4 hidden"></p>
+                    <button type="submit" id="registerSubmitBtn" class="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg
+                                                     hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-400
+                                                     focus:ring-offset-2 focus:ring-offset-slate-100
+                                                     transition duration-200 transform hover:scale-105">
+                        Create Account
+                    </button>
+                </form>
+                <!-- ADDED: "Sign In" link -->
+                <p class="text-center text-sm text-gray-600 mt-6">
+                    Already have an account?
+                    <button id="showSignInView" class="font-medium text-indigo-600 hover:text-indigo-500">
+                        Sign In
+                    </button>
+                </p>
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- Main Application Container (Hidden by default) -->
+    <div id="mainAppContainer" class="h-full flex flex-col hidden">
+
+        <!-- Status Message Bar -->
+        <div id="statusMessage" class="hidden w-full p-2 text-center text-sm z-20 relative border-b">
+            <span id="authStatus"></span>
+        </div>
+    
+        <!-- Header / Navbar -->
+        <nav class="w-full bg-white flex-shrink-0 z-10 shadow-md">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 text-indigo-600">
+                            <i data-lucide="book-marked" class="h-8 w-8"></i>
+                        </div>
+                        <div class="ml-4">
+                            <span class="text-xl font-bold text-indigo-600">Harshid Engravers</span>
+                        </div>
+                    </div>
+                    <!-- Desktop Menu -->
+                    <div class="hidden md:flex items-center space-x-4">
+                        <button data-page="logEntriesPage" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-indigo-600 hover:bg-indigo-50">
+                            Log Entries
+                        </button>
+                        <button data-page="addEntryPage" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-indigo-600 hover:bg-indigo-50">
+                            Add New Entry
+                        </button>
+                        <button data-page="manageUsersPage" class="nav-link role-admin-only px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-indigo-600 hover:bg-indigo-50" style="display: none;">
+                            Manage Users
+                        </button>
+                        <button data-action="signOut" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-red-600 hover:bg-red-50">
+                            Sign Out
+                        </button>
+                    </div>
+                    <!-- Mobile Menu Button -->
+                    <div class="md:hidden flex items-center">
+                        <button id="mobileMenuBtn" class="p-2 rounded-md text-gray-600 hover:text-indigo-600 hover:bg-indigo-50">
+                            <i data-lucide="menu" class="h-6 w-6"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile Menu (Dropdown) -->
+            <div id="mobileMenu" class="hidden md:hidden border-t border-gray-200">
+                <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                    <button data-page="logEntriesPage" class="nav-link-mobile flex items-center w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-indigo-50">
+                        <i data-lucide="book-copy" class="w-5 h-5 mr-3"></i>
+                        <span>Log Entries</span>
+                    </button>
+                    <button data-page="addEntryPage" class="nav-link-mobile flex items-center w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-indigo-50">
+                        <i data-lucide="plus-square" class="w-5 h-5 mr-3"></i>
+                        <span>Add New Entry</span>
+                    </button>
+                    <button data-page="manageUsersPage" class="nav-link-mobile role-admin-only flex items-center w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-indigo-50" style="display: none;">
+                        <i data-lucide="users" class="w-5 h-5 mr-3"></i>
+                        <span>Manage Users</span>
+                    </button>
+                    <button data-action="signOut" class="nav-link-mobile flex items-center w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-red-600 hover:bg-red-50">
+                        <i data-lucide="log-out" class="w-5 h-5 mr-3"></i>
+                        <span>Sign Out</span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+            <div class="max-w-7xl mx-auto">
+
+                <!-- Page: Log Entries -->
+                <div id="logEntriesPage" class="page-content">
+                    
+                    <!-- Search and Sort Controls -->
+                    <div class="light-panel p-4 mb-6">
+                        <div class="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0">
+                            <!-- Search Bar -->
+                            <div class="flex-grow md:w-2/3">
+                                <label for="search" class="sr-only">Search</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i data-lucide="search" class="h-5 w-5 text-gray-500"></i>
+                                    </div>
+                                    <input type="search" id="search" class="form-input !pl-10" placeholder="Search by Name, Job Type, Payment, Date, or Description...">
+                                </div>
+                            </div>
+                            <!-- Sort Dropdown -->
+                            <div class="flex-grow md:w-1/3">
+                                <label for="sort" class="sr-only">Sort by</label>
+                                <select id="sort" class="form-select">
+                                    <option value="date-desc">Sort by Date (Newest First)</option>
+                                    <option value="name-asc">Sort by Name (A-Z)</option>
+                                    <option value="name-desc">Sort by Name (Z-A)</option>
+                                    <option value="amount-desc">Sort by Amount (High-Low)</option>
+                                    <option value="amount-asc">Sort by Amount (Low-High)</option>
+                                    <option value="date-asc">Sort by Date (Oldest First)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Log Entries Grid -->
+                    <div id="logEntriesContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                        <!-- Log entries will be injected here -->
+                    </div>
+                    
+                    <!-- No Entries Message -->
+                    <div id="noEntriesMessage" class="hidden text-center text-gray-500 py-16">
+                        <i data-lucide="inbox" class="h-16 w-16 mx-auto text-gray-400"></i>
+                        <h3 class="mt-4 text-lg font-medium">No log entries found</h3>
+                        <p class="mt-1 text-sm">Get started by adding a new entry.</p>
+                    </div>
+
+                    <!-- Total Amount (Admin Only) -->
+                    <div id="totalAmountDisplay" class="role-admin-only mt-8 light-panel p-6 flex justify-between items-center">
+                        <h3 class="text-xl font-bold text-gray-900">Total Amount</h3>
+                        <span id="totalAmount" class="text-3xl font-bold text-indigo-600">₹0.00</span>
+                    </div>
+
+                </div>
+
+                <!-- Page: Add New Entry -->
+                <div id="addEntryPage" class="page-content hidden">
+                    <div class="light-panel p-6 md:p-8 max-w-3xl mx-auto">
+                        <h2 id="formTitle" class="text-2xl font-bold text-indigo-600 mb-6">Add New Entry</h2>
+                        <form id="logForm">
+                            <input type="hidden" id="entryId">
+                            
+                            <!-- Row 1 -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label for="partyName" class="block text-sm font-medium text-gray-700 mb-2">Party Name</label>
+                                    <input type="text" id="partyName" class="form-input" required>
+                                </div>
+                                <div>
+                                    <label for="jobType" class="block text-sm font-medium text-gray-700 mb-2">Job Type</label>
+                                    <input type="text" id="jobType" class="form-input" required>
+                                </div>
+                            </div>
+
+                            <!-- Row 2 -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label for="date" class="block text-sm font-medium text-gray-700 mb-2">Date</label>
+                                    <input type="date" id="date" class="form-input" required>
+                                </div>
+                                <div class="role-admin-only">
+                                    <label for="payment" class="block text-sm font-medium text-gray-700 mb-2">Payment (INR)</label>
+                                    <input type="number" id="payment" class="form-input" placeholder="0.00" step="0.01">
+                                </div>
+                            </div>
+                            
+                            <!-- Row 3: Payment Mode (Full Width) -->
+                            <div class="mb-4">
+                                <label for="paymentMode" class="block text-sm font-medium text-gray-700 mb-2">Payment Mode</label>
+                                <select id="paymentMode" class="form-select">
+                                    <option>Cash</option>
+                                    <option>Online (UPI, etc.)</option>
+                                    <option>Bank Transfer</option>
+                                    <option>Cheque</option>
+                                    <option>Pending</option>
+                                </select>
+                            </div>
+
+                            <!-- Row 4: Job Description (Full Width) -->
+                            <div class="mb-6">
+                                <label for="jobDescription" class="block text-sm font-medium text-gray-700 mb-2">Job Description</label>
+                                <textarea id="jobDescription" class="form-input" rows="3" placeholder="Add notes about the job..."></textarea>
+                            </div>
+                            
+                            <!-- Form Buttons -->
+                            <div class="flex items-center justify-end space-x-4">
+                                <button type="button" id="cancelEditBtn" class="bg-gray-200 text-gray-700 font-bold py-3 px-6 rounded-lg
+                                                     hover:bg-gray-300
+                                                     transition duration-200 hidden">
+                                    Cancel
+                                </button>
+                                <button type="submit" id="submitBtn" class="bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg
+                                                     hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-400
+                                                     focus:ring-offset-2 focus:ring-offset-white
+                                                     transition duration-200 transform hover:scale-105">
+                                    Add Entry
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Page: Manage Users (Admin Only) -->
+                <div id="manageUsersPage" class="page-content hidden role-admin-only">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Add New User Form -->
+                        <div class="lg:col-span-1">
+                            <div class="light-panel p-6 md:p-8">
+                                <h2 class="text-2xl font-bold text-indigo-600 mb-6">Add New User</h2>
+                                <form id="addUserForm">
+                                    <div class="mb-4">
+                                        <label for="newUserId" class="block text-sm font-medium text-gray-700 mb-2">New User ID</label>
+                                        <input type="text" id="newUserId" class="form-input" placeholder="e.g., new@logbook" required>
+                                    </div>
+                                    <div class="mb-4">
+                                        <label for="newUserPassword" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                                        <input type="password" id="newUserPassword" class="form-input" placeholder="••••••••" required>
+                                    </div>
+                                    <div class="mb-6">
+                                        <label for="newUserRole" class="block text-sm font-medium text-gray-700 mb-2">Role</label>
+                                        <select id="newUserRole" class="form-select">
+                                            <option value="user">User</option>
+                                            <option value="admin">Admin</option>
+                                        </select>
+                                    </div>
+                                    <p id="addUserError" class="text-red-500 text-sm text-center mb-4 hidden"></p>
+                                    <button type="submit" id="addUserSubmitBtn" class="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg
+                                                         hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-400
+                                                         focus:ring-offset-2 focus:ring-offset-white
+                                                         transition duration-200 transform hover:scale-105">
+                                        Add User
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Existing Users List -->
+                        <div class="lg:col-span-2">
+                            <div class="light-panel">
+                                <h2 class="text-2xl font-bold text-indigo-600 p-6 md:p-8 border-b border-gray-200">Existing Users</h2>
+                                <div id="usersListContainer" class="divide-y divide-gray-200">
+                                    <!-- User list will be injected here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+    </div> <!-- End Main App Container -->
+
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>
