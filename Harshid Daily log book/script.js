@@ -579,10 +579,10 @@ function createEntryCard(entry) {
                 
                 <div class="flex justify-end space-x-2 pt-4 border-t border-gray-200">
                     <button data-id="${entry.id}" class="edit-btn p-2 rounded-md hover:bg-indigo-50 transition-colors flex">
-                        <i data-lucide="edit-3" class="w-5 h-5 pointer-events-none text-indigo-500 hover:text-indigo-700"></i>
+                        <i data-lucide="edit-3" class="w-5 h-5 pointer-events-none text-indigo-500 hover:text-indigo-700">Edit</i>
                     </button>
                     <button data-id="${entry.id}" class="delete-btn p-2 rounded-md hover:bg-red-50 transition-colors flex">
-                        <i data-lucide="trash-2" class="w-5 h-5 pointer-events-none text-red-500 hover:text-red-700"></i>
+                        <i data-lucide="trash-2" class="w-5 h-5 pointer-events-none text-red-500 hover:text-red-700">Delete</i>
                     </button>
                 </div>
             `;
