@@ -1,55 +1,52 @@
- /* Base styles */
- body {
-     font-family: 'Inter', sans-serif;
-     @apply bg-slate-100;
- }
+/* Base styles */
+body {
+    font-family: 'Inter', sans-serif;
+    @apply bg-slate-100;
+}
 
- /* Light Panel style */
- .light-panel {
-     background-color: #ffffff;
-     /* bg-white */
-     border: 1px solid #e5e7eb;
-     /* border-gray-200 */
-     @apply rounded-xl shadow-lg;
- }
+/* Light Panel style */
+.light-panel {
+    background-color: #ffffff;
+    /* bg-white */
+    border: 1px solid #e5e7eb;
+    /* border-gray-200 */
+    @apply rounded-xl shadow-lg;
+}
 
- /* Custom scrollbar */
- ::-webkit-scrollbar {
-     width: 8px;
- }
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
 
- ::-webkit-scrollbar-track {
-     background: #f1f5f9;
-     /* bg-slate-100 */
-     border-radius: 10px;
- }
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    /* bg-slate-100 */
+    border-radius: 10px;
+}
 
- ::-webkit-scrollbar-thumb {
-     background: rgba(79, 70, 229, 0.5);
-     /* indigo-600 */
-     border-radius: 10px;
- }
+::-webkit-scrollbar-thumb {
+    background: rgba(79, 70, 229, 0.5);
+    /* indigo-600 */
+    border-radius: 10px;
+}
 
- ::-webkit-scrollbar-thumb:hover {
-     background: rgba(79, 70, 229, 0.7);
- }
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(79, 70, 229, 0.7);
+}
 
- /* Custom input styles for the light theme */
- .form-select,
- .form-input {
-     @apply w-full px-4 py-3 border border-gray-300 rounded-lg shadow-inner bg-gray-50 text-gray-900 placeholder-gray-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent;
- }
+/* Custom input styles for the light theme */
+.form-select,
+.form-input {
+    @apply w-full px-4 py-3 border border-gray-300 rounded-lg shadow-inner bg-gray-50 text-gray-900 placeholder-gray-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent;
+}
 
- /* Hide number input arrows */
- input[type=number]::-webkit-inner-spin-button,
- input[type=number]::-webkit-outer-spin-button {
-     -webkit-appearance: none;
-     margin: 0;
- }
+/* Hide number input arrows */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
 
- input[type=number] {
-     -moz-appearance: textfield;
- }
-
- /* Login Tab Styles */
- /* REMOVED: .login-tab styles */
+input[type=number] {
+    -moz-appearance: textfield;
+}

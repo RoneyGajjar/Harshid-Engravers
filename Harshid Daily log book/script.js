@@ -1,6 +1,6 @@
 
 // --- App Configuration ---
-const apiUrl = 'https://harshid-engravers.onrender.com/api'; // Our backend server
+const apiUrl = 'http://localhost:3000/api'; // Our backend server
 
 // --- Global Variables ---
 let allLogEntries = []; // Local cache for all entries
@@ -17,10 +17,8 @@ const loginError = document.getElementById('loginError');
 const loginSubmitBtn = document.getElementById('loginSubmitBtn');
 const mainAppContainer = document.getElementById('mainAppContainer');
 
-// Login Tabs
-/* REMOVED: signInTab and registerTab variables */
-const showRegisterView = document.getElementById('showRegisterView'); // ADDED
-const showSignInView = document.getElementById('showSignInView'); // ADDED
+const showRegisterView = document.getElementById('showRegisterView');
+const showSignInView = document.getElementById('showSignInView');
 
 const signInView = document.getElementById('signInView');
 const registerView = document.getElementById('registerView');
@@ -38,10 +36,6 @@ const statusMessage = document.getElementById('statusMessage');
 // --- Mobile Menu Elements ---
 const mobileMenuBtn = document.getElementById('mobileMenuBtn');
 const mobileMenu = document.getElementById('mobileMenu');
-
-const navLogEntries = document.querySelector('[data-page="logEntriesPage"]'); // Will find the first one
-const navAddEntry = document.querySelector('[data-page="addEntryPage"]');
-const navManageUsers = document.querySelector('[data-page="manageUsersPage"]');
 
 const logEntriesPage = document.getElementById('logEntriesPage');
 const addEntryPage = document.getElementById('addEntryPage');
@@ -80,13 +74,13 @@ const usersListContainer = document.getElementById('usersListContainer');
 // --- Login / Register Handling ---
 
 // Tab switching
-showRegisterView.addEventListener('click', () => { // UPDATED
+showRegisterView.addEventListener('click', () => {
     signInView.classList.add('hidden');
     registerView.classList.remove('hidden');
     clearLoginErrors();
 });
 
-showSignInView.addEventListener('click', () => { // UPDATED
+showSignInView.addEventListener('click', () => {
     signInView.classList.remove('hidden');
     registerView.classList.add('hidden');
     clearLoginErrors();
@@ -134,7 +128,6 @@ loginForm.addEventListener('submit', async (e) => {
         // Set UI based on role
         setUIVisibilityByRole();
 
-        // We just need to fetch the data now.
         statusMessage.classList.remove('hidden');
         authStatus.textContent = `Status: Connected as ${currentUserId} (${currentUserRole})`;
         statusMessage.classList.add('bg-green-100', 'text-green-800', 'border-green-300');
@@ -202,9 +195,9 @@ registerForm.addEventListener('submit', async (e) => {
         registerSuccess.textContent = 'Account created! Please sign in.';
         registerSuccess.classList.remove('hidden');
         registerForm.reset();
-        // Switch back to login tab
+
         setTimeout(() => {
-            showSignInView.click(); // UPDATED
+            showSignInView.click();
         }, 2000);
 
     } catch (error) {
@@ -223,20 +216,19 @@ function setUIVisibilityByRole() {
 
     if (currentUserRole === 'admin') {
         adminElements.forEach(el => {
-            // Restore original display type (flex, block, etc.)
-
-            if (el.id === 'manageUsersPage') {
-                // Let showPage() handle this page's visibility
-                return;
-            }
-
+            // Restore original display type
+            // We must remove 'display: none'
+            el.style.display = null; // Clear inline style
             if (el.id === 'totalAmountDisplay') el.style.display = 'flex';
-            else if (el.id === 'navManageUsers') el.style.display = 'block';
-            else el.style.display = 'block';
+            else if (el.id === 'manageUsersPage') el.style.display = 'grid'; // This page is a grid
+            else if (el.tagName === 'BUTTON' || el.tagName === 'A') el.style.display = 'flex'; // For nav links
+            else el.style.display = 'block'; // Default for divs, etc.
         });
     } else { // 'user' role
         adminElements.forEach(el => el.style.display = 'none');
     }
+    // After roles are set, we must hide all pages except the default
+    showPage('logEntriesPage');
 }
 
 // --- Page Navigation ---
@@ -252,8 +244,10 @@ function showPage(pageId) {
         pageToShow.classList.remove('hidden');
         // Special case for manage users page, which is a grid
         if (pageId === 'manageUsersPage') {
-            pageToShow.style.display = 'grid'; // This overrides 'none'
-            fetchUsersList(); // Refresh user list every time we visit
+            if (currentUserRole === 'admin') { // Extra check
+                pageToShow.style.display = 'grid'; // This overrides 'none'
+                fetchUsersList(); // Refresh user list every time we visit
+            }
         } else {
             pageToShow.style.display = 'block'; // This overrides 'none' for other pages
         }
@@ -262,12 +256,8 @@ function showPage(pageId) {
     // Highlight active nav link
     document.querySelectorAll('.nav-link, .nav-link-mobile').forEach(link => {
         link.classList.remove('text-indigo-600', 'bg-indigo-50');
-        link.classList.add('text-gray-600');
-
-        // Special case for sign out
-        if (link.dataset.action === 'signOut') {
-            link.classList.add('hover:text-red-600', 'hover:bg-red-50');
-            link.classList.remove('hover:text-indigo-600', 'hover:bg-indigo-50');
+        if (!link.dataset.action === 'signOut') {
+            link.classList.add('text-gray-600');
         }
     });
 
@@ -283,7 +273,6 @@ function showPage(pageId) {
 // Toggle mobile menu
 mobileMenuBtn.addEventListener('click', () => {
     mobileMenu.classList.toggle('hidden');
-    // Re-render icons in case they were added dynamically
     if (typeof lucide !== 'undefined') {
         lucide.createIcons();
     }
@@ -311,18 +300,11 @@ document.querySelectorAll('[data-action="signOut"]').forEach(link => {
     });
 });
 
-// OLD Listeners - REMOVED
-// navLogEntries.addEventListener('click', () => showPage('logEntriesPage'));
-// navAddEntry.addEventListener('click', () => {
-//     resetForm();
-//     showPage('addEntryPage');
-// });
-// navManageUsers.addEventListener('click', () => showPage('manageUsersPage'));
-cancelEditBtn.addEventListener('click', () => { // <-- THIS WAS MISSING
+// Cancel Edit button
+cancelEditBtn.addEventListener('click', () => {
     resetForm();
     showPage('logEntriesPage');
 });
-// navSignOut.addEventListener('click', handleSignOut); // Added listener
 
 // --- Sign Out ---
 function handleSignOut() {
@@ -426,8 +408,15 @@ function resetForm() {
     submitBtn.textContent = "Add Entry";
     cancelEditBtn.classList.add('hidden');
 
-    // Ensure admin-only fields are visible if admin
-    setUIVisibilityByRole();
+    // Re-apply role visibility to the form (e.g., show payment field for admin)
+    if (currentUserRole === 'admin') {
+        document.querySelectorAll('.role-admin-only').forEach(el => {
+            // Check if it's inside the form
+            if (logForm.contains(el)) {
+                el.style.display = 'block';
+            }
+        });
+    }
 }
 
 // --- Data Fetching and Rendering (Log Entries) ---
@@ -578,23 +567,85 @@ function createEntryCard(entry) {
                 </div>
                 
                 <div class="flex justify-end space-x-2 pt-4 border-t border-gray-200">
+                    <!-- CHANGED: Copy button for Admin -->
+                    ${currentUserRole === 'admin' ? `
+                    <button data-id="${entry.id}" class="copy-btn p-2 rounded-md hover:bg-green-50 transition-colors flex">
+                        <i data-lucide="copy" class="w-5 h-5 pointer-events-none text-green-500 hover:text-green-700"></i>
+                    </button>
+                    ` : ''}
                     <button data-id="${entry.id}" class="edit-btn p-2 rounded-md hover:bg-indigo-50 transition-colors flex">
-                        <i data-lucide="edit-3" class="w-5 h-5 pointer-events-none text-indigo-500 hover:text-indigo-700">Edit</i>
+                        <i data-lucide="edit-3" class="w-5 h-5 pointer-events-none text-indigo-500 hover:text-indigo-700"></i>
                     </button>
                     <button data-id="${entry.id}" class="delete-btn p-2 rounded-md hover:bg-red-50 transition-colors flex">
-                        <i data-lucide="trash-2" class="w-5 h-5 pointer-events-none text-red-500 hover:text-red-700">Delete</i>
+                        <i data-lucide="trash-2" class="w-5 h-5 pointer-events-none text-red-500 hover:text-red-700"></i>
                     </button>
                 </div>
             `;
 
     // Add event listeners for buttons
     card.querySelector('.edit-btn').addEventListener('click', () => handleEdit(entry));
-    card.querySelector('.delete-btn').addEventListener('click', () => handleDeleteEntry(entry.id)); // Use entry.id (which is _id)
+    card.querySelector('.delete-btn').addEventListener('click', () => handleDeleteEntry(entry.id));
+
+    // CHANGED: Add copy listener if admin
+    if (currentUserRole === 'admin') {
+        const copyBtn = card.querySelector('.copy-btn');
+        if (copyBtn) {
+            copyBtn.addEventListener('click', () => handleCopyToClipboard(entry));
+        }
+    }
 
     return card;
 }
 
-// --- Edit and Delete (Log Entries) ---
+// --- Edit, Copy, and Delete (Log Entries) ---
+
+// CHANGED: New function to copy entry details to clipboard
+function handleCopyToClipboard(entry) {
+    // Format date: YYYY-MM-DD -> DD/MM/YYYY
+    const dateParts = (entry.date || '---').split('-');
+    const formattedDate = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}` : (entry.date || 'No Date');
+
+    const paymentAmount = (entry.payment || 0).toLocaleString('en-IN', {
+        style: 'currency',
+        currency: 'INR',
+        minimumFractionDigits: 2
+    });
+
+    // Build the text block
+    const textToCopy = [
+        `Date: ${formattedDate}`,
+        `Party Name: ${entry.partyName || ''}`,
+        `Job Type: ${entry.jobType || ''}`,
+        `Description: ${entry.jobDescription || 'N/A'}`,
+        `Payment: ${paymentAmount}`,
+        `Mode: ${entry.paymentMode || ''}`
+    ].join('\n'); // Join with newlines
+
+    // Use the clipboard API
+    try {
+        // We must use a fallback for `execCommand` as `navigator.clipboard` might be blocked in some iFrames
+        const textArea = document.createElement("textarea");
+        textArea.value = textToCopy;
+        textArea.style.position = "fixed";  // Make it invisible
+        textArea.style.top = "-9999px";
+        textArea.style.left = "-9999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            showStatus('Entry copied to clipboard!', 'success');
+        } catch (err) {
+            console.error('Fallback copy error:', err);
+            showStatus('Failed to copy text.', 'error');
+        }
+        document.body.removeChild(textArea);
+
+    } catch (err) {
+        console.error('Async copy error: ', err);
+        showStatus('Failed to copy text.', 'error');
+    }
+}
 
 // Populate form for editing
 function handleEdit(entry) {
@@ -700,11 +751,11 @@ async function fetchUsersList() {
         const users = await response.json();
         renderUsersList(users);
 
-    } catch (error) { // <-- ADDED BRACE
+    } catch (error) {
         console.error("Error fetching users:", error);
         showStatus(`Error: ${error.message}`, 'error');
         usersListContainer.innerHTML = `<p class="p-6 text-red-500">Could not load users.</p>`;
-    } // <-- ADDED BRACE
+    }
 }
 
 // Render the list of users
@@ -794,6 +845,3 @@ function showStatus(message, type = 'success') {
     }, 3000);
 }
 
-// --- Final Setup ---
-// On initial load, reset form and set input colors correctly
-// (This is handled by the new .form-input classes)
