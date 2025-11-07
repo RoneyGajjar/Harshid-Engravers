@@ -12,7 +12,7 @@ app.use(cors()); // Allow requests from the browser
 app.use(express.json()); // Parse JSON bodies
 
 // --- Database Connection ---
-const mongoUrl = 'mongodb://localhost:27017'; // Default local MongoDB URL
+const mongoUrl = 'mongodb+srv://roneygajjar121_db_user:RoneyGajjar3060@cluster0.z7tewrm.mongodb.net/'; // Default local MongoDB URL
 const dbName = 'harshid-logbook';
 let db;
 let entriesCollection;
