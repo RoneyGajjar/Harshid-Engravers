@@ -1,6 +1,6 @@
 
 // --- App Configuration ---
-const apiUrl = 'http://localhost:3000/api'; // Our backend server
+const apiUrl = 'https://harshid-engravers.onrender.com/api'; // Our backend server
 
 // --- Global Variables ---
 let allLogEntries = []; // Local cache for all entries
