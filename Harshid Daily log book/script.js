@@ -1,4 +1,3 @@
-
 // --- App Configuration ---
 const apiUrl = 'https://harshid-engravers.onrender.com/api'; // Our backend server
 
@@ -7,6 +6,11 @@ let allLogEntries = []; // Local cache for all entries
 let currentEditId = null; // To track editing
 let currentUserRole = null; // 'admin' or 'user'
 let currentUserId = null; // The logged-in user's ID string
+
+// Bootstrap Tab instances
+let loginTab = new bootstrap.Tab(document.getElementById('sign-in-tab'));
+let registerTab = new bootstrap.Tab(document.getElementById('register-tab'));
+let mainNavbarCollapse = new bootstrap.Collapse(document.getElementById('mainNavbar'), { toggle: false });
 
 // --- DOM Elements ---
 const loginOverlay = document.getElementById('loginOverlay');
@@ -17,11 +21,6 @@ const loginError = document.getElementById('loginError');
 const loginSubmitBtn = document.getElementById('loginSubmitBtn');
 const mainAppContainer = document.getElementById('mainAppContainer');
 
-const showRegisterView = document.getElementById('showRegisterView');
-const showSignInView = document.getElementById('showSignInView');
-
-const signInView = document.getElementById('signInView');
-const registerView = document.getElementById('registerView');
 const registerForm = document.getElementById('registerForm');
 const newRegisterUserIdInput = document.getElementById('newRegisterUserId');
 const newRegisterPasswordInput = document.getElementById('newRegisterPassword');
@@ -30,12 +29,7 @@ const registerError = document.getElementById('registerError');
 const registerSuccess = document.getElementById('registerSuccess');
 const registerSubmitBtn = document.getElementById('registerSubmitBtn');
 
-const authStatus = document.getElementById('authStatus');
-const statusMessage = document.getElementById('statusMessage');
-
-// --- Mobile Menu Elements ---
-const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-const mobileMenu = document.getElementById('mobileMenu');
+const statusMessageContainer = document.getElementById('statusMessageContainer');
 
 const logEntriesPage = document.getElementById('logEntriesPage');
 const addEntryPage = document.getElementById('addEntryPage');
@@ -73,23 +67,14 @@ const usersListContainer = document.getElementById('usersListContainer');
 
 // --- Login / Register Handling ---
 
-// Tab switching
-showRegisterView.addEventListener('click', () => {
-    signInView.classList.add('hidden');
-    registerView.classList.remove('hidden');
-    clearLoginErrors();
-});
-
-showSignInView.addEventListener('click', () => {
-    signInView.classList.remove('hidden');
-    registerView.classList.add('hidden');
-    clearLoginErrors();
-});
+// Clear errors when switching tabs
+document.getElementById('sign-in-tab').addEventListener('shown.bs.tab', clearLoginErrors);
+document.getElementById('register-tab').addEventListener('shown.bs.tab', clearLoginErrors);
 
 function clearLoginErrors() {
-    loginError.classList.add('hidden');
-    registerError.classList.add('hidden');
-    registerSuccess.classList.add('hidden');
+    loginError.classList.add('d-none');
+    registerError.classList.add('d-none');
+    registerSuccess.classList.add('d-none');
     registerForm.reset();
     loginForm.reset();
 }
@@ -101,8 +86,8 @@ loginForm.addEventListener('submit', async (e) => {
     const enteredPassword = passwordInput.value;
 
     loginSubmitBtn.disabled = true;
-    loginSubmitBtn.textContent = 'Signing In...';
-    loginError.classList.add('hidden');
+    loginSubmitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Signing In...';
+    loginError.classList.add('d-none');
 
     try {
         const response = await fetch(`${apiUrl}/login`, {
@@ -121,32 +106,20 @@ loginForm.addEventListener('submit', async (e) => {
         currentUserRole = data.role;
         currentUserId = data.userId;
 
-        // Hide login, show app
-        loginOverlay.classList.add('hidden');
-        mainAppContainer.classList.remove('hidden');
+        loginOverlay.classList.add('d-none');
+        mainAppContainer.classList.remove('d-none');
 
-        // Set UI based on role
         setUIVisibilityByRole();
 
-        statusMessage.classList.remove('hidden');
-        authStatus.textContent = `Status: Connected as ${currentUserId} (${currentUserRole})`;
-        statusMessage.classList.add('bg-green-100', 'text-green-800', 'border-green-300');
-        statusMessage.classList.remove('bg-red-100', 'text-red-800', 'border-red-300');
+        showStatus(`Connected as ${currentUserId} (${currentUserRole})`, 'success', false);
 
-        fetchLogEntries(); // Fetch data from MongoDB
+        fetchLogEntries();
 
-        // Now that app is visible, show the default page
         showPage('logEntriesPage');
 
-        // Init icons
-        if (typeof lucide !== 'undefined') {
-            lucide.createIcons();
-        }
-
     } catch (error) {
-        // Failed login
         loginError.textContent = error.message;
-        loginError.classList.remove('hidden');
+        loginError.classList.remove('d-none');
     } finally {
         loginSubmitBtn.disabled = false;
         loginSubmitBtn.textContent = 'Sign In';
@@ -160,23 +133,23 @@ registerForm.addEventListener('submit', async (e) => {
     const password = newRegisterPasswordInput.value;
     const confirmPass = confirmPasswordInput.value;
 
-    registerError.classList.add('hidden');
-    registerSuccess.classList.add('hidden');
+    registerError.classList.add('d-none');
+    registerSuccess.classList.add('d-none');
 
     if (password !== confirmPass) {
         registerError.textContent = 'Passwords do not match.';
-        registerError.classList.remove('hidden');
+        registerError.classList.remove('d-none');
         return;
     }
 
     if (!userId || !password) {
         registerError.textContent = 'User ID and Password are required.';
-        registerError.classList.remove('hidden');
+        registerError.classList.remove('d-none');
         return;
     }
 
     registerSubmitBtn.disabled = true;
-    registerSubmitBtn.textContent = 'Creating Account...';
+    registerSubmitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Creating...';
 
     try {
         const response = await fetch(`${apiUrl}/register`, {
@@ -193,16 +166,16 @@ registerForm.addEventListener('submit', async (e) => {
 
         // Success!
         registerSuccess.textContent = 'Account created! Please sign in.';
-        registerSuccess.classList.remove('hidden');
+        registerSuccess.classList.remove('d-none');
         registerForm.reset();
 
         setTimeout(() => {
-            showSignInView.click();
+            loginTab.show(); // Switch to login tab
         }, 2000);
 
     } catch (error) {
         registerError.textContent = error.message;
-        registerError.classList.remove('hidden');
+        registerError.classList.remove('d-none');
     } finally {
         registerSubmitBtn.disabled = false;
         registerSubmitBtn.textContent = 'Create Account';
@@ -216,13 +189,7 @@ function setUIVisibilityByRole() {
 
     if (currentUserRole === 'admin') {
         adminElements.forEach(el => {
-            // Restore original display type
-            // We must remove 'display: none'
-            el.style.display = null; // Clear inline style
-            if (el.id === 'totalAmountDisplay') el.style.display = 'flex';
-            else if (el.id === 'manageUsersPage') el.style.display = 'grid'; // This page is a grid
-            else if (el.tagName === 'BUTTON' || el.tagName === 'A') el.style.display = 'flex'; // For nav links
-            else el.style.display = 'block'; // Default for divs, etc.
+            el.style.display = null; // Clear inline style to restore default
         });
     } else { // 'user' role
         adminElements.forEach(el => el.style.display = 'none');
@@ -233,62 +200,41 @@ function setUIVisibilityByRole() {
 
 // --- Page Navigation ---
 function showPage(pageId) {
-    // Explicitly set display:none to override inline styles
     document.querySelectorAll('.page-content').forEach(page => {
-        page.classList.add('hidden');
-        page.style.display = 'none'; // This is the fix
+        page.classList.add('d-none');
     });
 
     const pageToShow = document.getElementById(pageId);
     if (pageToShow) {
-        pageToShow.classList.remove('hidden');
-        // Special case for manage users page, which is a grid
-        if (pageId === 'manageUsersPage') {
-            if (currentUserRole === 'admin') { // Extra check
-                pageToShow.style.display = 'grid'; // This overrides 'none'
-                fetchUsersList(); // Refresh user list every time we visit
-            }
-        } else {
-            pageToShow.style.display = 'block'; // This overrides 'none' for other pages
-        }
+        pageToShow.classList.remove('d-none');
+    }
+
+    if (pageId === 'manageUsersPage') {
+        fetchUsersList(); // Refresh user list every time we visit
     }
 
     // Highlight active nav link
-    document.querySelectorAll('.nav-link, .nav-link-mobile').forEach(link => {
-        link.classList.remove('text-indigo-600', 'bg-indigo-50');
-        if (!link.dataset.action === 'signOut') {
-            link.classList.add('text-gray-600');
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active', 'fw-bold');
+        if (link.dataset.page === pageId) {
+            link.classList.add('active', 'fw-bold');
         }
-    });
-
-    const activeLinks = document.querySelectorAll(`[data-page="${pageId}"]`);
-    activeLinks.forEach(link => {
-        link.classList.add('text-indigo-600', 'bg-indigo-50');
-        link.classList.remove('text-gray-600');
     });
 }
 
 // --- Event Listeners for Navigation ---
 
-// Toggle mobile menu
-mobileMenuBtn.addEventListener('click', () => {
-    mobileMenu.classList.toggle('hidden');
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-    }
-});
-
 // Listen for all page navigation clicks (desktop and mobile)
 document.querySelectorAll('[data-page]').forEach(link => {
-    link.addEventListener('click', () => {
-        const pageId = link.dataset.page;
+    link.addEventListener('click', (e) => {
+        const pageId = e.currentTarget.dataset.page;
 
         if (pageId === 'addEntryPage') {
             resetForm();
         }
 
         showPage(pageId);
-        mobileMenu.classList.add('hidden'); // Close mobile menu on click
+        mainNavbarCollapse.hide(); // Close mobile menu on click
     });
 });
 
@@ -296,7 +242,7 @@ document.querySelectorAll('[data-page]').forEach(link => {
 document.querySelectorAll('[data-action="signOut"]').forEach(link => {
     link.addEventListener('click', () => {
         handleSignOut();
-        mobileMenu.classList.add('hidden'); // Close mobile menu on click
+        mainNavbarCollapse.hide(); // Close mobile menu on click
     });
 });
 
@@ -308,44 +254,34 @@ cancelEditBtn.addEventListener('click', () => {
 
 // --- Sign Out ---
 function handleSignOut() {
-    // 1. Hide main app, show login
-    mainAppContainer.classList.add('hidden');
-    loginOverlay.classList.remove('hidden');
+    mainAppContainer.classList.add('d-none');
+    loginOverlay.classList.remove('d-none');
 
-    // 2. Clear login form fields
     clearLoginErrors();
+    loginTab.show(); // Reset to login tab
 
-    // 3. Reset role
     currentUserRole = null;
     currentUserId = null;
-
-    // 4. Clear local data
     allLogEntries = [];
 
-    // 5. Clear UI
     logEntriesContainer.innerHTML = '';
-    logEntriesContainer.classList.add('hidden'); // Hide container
-    noEntriesMessage.classList.remove('hidden'); // Show "no entries"
+    noEntriesMessage.classList.remove('d-none');
     totalAmountEl.textContent = '₹0.00';
     usersListContainer.innerHTML = '';
-    mobileMenu.classList.add('hidden'); // Ensure mobile menu is closed
+    mainNavbarCollapse.hide();
 
-    // 6. Reset status bar
-    authStatus.textContent = "Signed Out.";
-    statusMessage.classList.add('hidden');
-    statusMessage.classList.remove('bg-green-100', 'text-green-800', 'border-green-300', 'bg-red-100', 'text-red-800', 'border-red-300');
+    statusMessageContainer.innerHTML = ''; // Clear status bar
 }
 
 
 // --- Form Handling ---
 logForm.addEventListener('submit', handleFormSubmit);
 
-// Add or Update Log Entry
 async function handleFormSubmit(e) {
     e.preventDefault();
 
     if (!currentUserRole) {
-        showStatus("Error: Not signed in.", 'error');
+        showStatus("Error: Not signed in.", 'danger');
         return;
     }
 
@@ -353,32 +289,31 @@ async function handleFormSubmit(e) {
         partyName: partyNameInput.value,
         jobType: jobTypeInput.value,
         date: dateInput.value,
-        payment: (currentUserRole === 'admin' && paymentInput.value) ? parseFloat(paymentInput.value) : 0, // Only save payment if admin
+        payment: (currentUserRole === 'admin' && paymentInput.value) ? parseFloat(paymentInput.value) : 0,
         paymentMode: paymentModeInput.value,
         jobDescription: jobDescriptionInput.value,
     };
 
-    // For 'user' role, if they are editing, we must preserve the original payment
     if (currentUserRole === 'user' && currentEditId) {
         const originalEntry = allLogEntries.find(item => item.id === currentEditId);
         entry.payment = originalEntry ? originalEntry.payment : 0;
     }
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
 
     try {
         let url = `${apiUrl}/entry`;
         let method = 'POST';
 
         if (currentEditId) {
-            // Update existing document
             url = `${apiUrl}/entry/${currentEditId}`;
             method = 'PUT';
         }
 
         const response = await fetch(url, {
             method: method,
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json', },
             body: JSON.stringify(entry),
         });
 
@@ -390,12 +325,15 @@ async function handleFormSubmit(e) {
         showStatus(currentEditId ? "Entry updated successfully!" : "Entry added successfully!", 'success');
 
         resetForm();
-        showPage('logEntriesPage'); // Go back to log list
-        fetchLogEntries(); // Manually refresh data
+        showPage('logEntriesPage');
+        fetchLogEntries();
 
     } catch (error) {
         console.error("Error saving document: ", error);
-        showStatus(`Error: ${error.message}`, 'error');
+        showStatus(`Error: ${error.message}`, 'danger');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = currentEditId ? "Update Entry" : "Add Entry";
     }
 }
 
@@ -406,22 +344,17 @@ function resetForm() {
     entryIdInput.value = "";
     formTitle.textContent = "Add New Entry";
     submitBtn.textContent = "Add Entry";
-    cancelEditBtn.classList.add('hidden');
+    cancelEditBtn.classList.add('d-none');
 
-    // Re-apply role visibility to the form (e.g., show payment field for admin)
     if (currentUserRole === 'admin') {
-        document.querySelectorAll('.role-admin-only').forEach(el => {
-            // Check if it's inside the form
-            if (logForm.contains(el)) {
-                el.style.display = 'block';
-            }
+        logForm.querySelectorAll('.role-admin-only').forEach(el => {
+            el.style.display = null; // Restore
         });
     }
 }
 
 // --- Data Fetching and Rendering (Log Entries) ---
 
-// This is now a one-time fetch
 async function fetchLogEntries() {
     try {
         const response = await fetch(`${apiUrl}/entries`);
@@ -431,14 +364,13 @@ async function fetchLogEntries() {
         }
         const data = await response.json();
 
-        // MongoDB uses _id, so we need to map it
         allLogEntries = data.map(doc => ({ id: doc._id, ...doc }));
 
-        renderLogEntries(); // Render with default sort
+        renderLogEntries();
 
     } catch (error) {
         console.error("Error fetching log entries: ", error);
-        showStatus(`Error: ${error.message}`, 'error');
+        showStatus(`Error: ${error.message}`, 'danger');
     }
 }
 
@@ -458,7 +390,7 @@ function renderLogEntries() {
             return (
                 (entry.partyName || '').toLowerCase().includes(searchTerm) ||
                 (entry.jobType || '').toLowerCase().includes(searchTerm) ||
-                (currentUserRole === 'admin' && paymentString.includes(searchTerm)) || // Only search payment if admin
+                (currentUserRole === 'admin' && paymentString.includes(searchTerm)) ||
                 (entry.date || '').toLowerCase().includes(searchTerm) ||
                 (entry.jobDescription || '').toLowerCase().includes(searchTerm)
             );
@@ -493,49 +425,44 @@ function renderLogEntries() {
     }
 
     // 3. Render
-    logEntriesContainer.innerHTML = ''; // Clear existing
+    logEntriesContainer.innerHTML = '';
     if (filteredEntries.length === 0) {
-        noEntriesMessage.classList.remove('hidden');
-        logEntriesContainer.classList.add('hidden');
+        noEntriesMessage.classList.remove('d-none');
     } else {
-        noEntriesMessage.classList.add('hidden');
-        logEntriesContainer.classList.remove('hidden');
+        noEntriesMessage.classList.add('d-none');
 
         let lastDate = null;
         const showDateDividers = sortValue.startsWith('date-');
+        const colWrapper = document.createElement('div'); // Create a temporary wrapper
+        colWrapper.className = 'col-12';
 
         filteredEntries.forEach(entry => {
-            // Add date divider if needed
             if (showDateDividers && entry.date !== lastDate) {
                 if (lastDate !== null) {
-                    const hr = document.createElement('hr');
-                    hr.className = 'border-t border-gray-200 md:col-span-2 lg:col-span-3 my-2';
-                    logEntriesContainer.appendChild(hr);
+                    logEntriesContainer.innerHTML += `<hr class="col-12 my-3 border-secondary-subtle">`;
                 }
                 lastDate = entry.date;
             }
 
             const card = createEntryCard(entry);
-            logEntriesContainer.appendChild(card);
+            logEntriesContainer.appendChild(card); // Append card directly to grid
         });
     }
 
-    // 4. Update Total (for admins)
+    // 4. Update Total
     if (currentUserRole === 'admin') {
         const total = filteredEntries.reduce((sum, entry) => sum + (entry.payment || 0), 0);
         totalAmountEl.textContent = `₹${total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    }
-
-    // 5. Update Icons
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
     }
 }
 
 // Create HTML for a single entry card
 function createEntryCard(entry) {
+    const col = document.createElement('div');
+    // col.className = 'col'; // Bootstrap grid handles this
+
     const card = document.createElement('div');
-    card.className = 'light-panel p-5 flex flex-col justify-between';
+    card.className = 'card shadow-sm border-0 h-100';
 
     const paymentAmount = (entry.payment || 0).toLocaleString('en-IN', {
         style: 'currency',
@@ -543,65 +470,65 @@ function createEntryCard(entry) {
         minimumFractionDigits: 2
     });
 
-    // Format date: YYYY-MM-DD -> DD/MM/YYYY
     const dateParts = (entry.date || '---').split('-');
     const formattedDate = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}` : (entry.date || 'No Date');
 
-    card.innerHTML = `
-                <div>
-                    <div class="flex justify-between items-start mb-2">
-                        <h3 class="text-xl font-bold text-indigo-600">${entry.partyName || 'No Name'}</h3>
-                        <span class="text-sm font-medium text-gray-600 bg-gray-100 px-2.5 py-0.5 rounded-full">${entry.paymentMode || 'N/A'}</span>
+    const cardBody = document.createElement('div');
+    cardBody.className = 'card-body d-flex flex-column';
+
+    cardBody.innerHTML = `
+                <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h3 class="h5 fw-bold text-primary mb-0">${entry.partyName || 'No Name'}</h3>
+                        <span class="badge bg-light text-dark-emphasis border">${entry.paymentMode || 'N/A'}</span>
                     </div>
-                    <p class="text-sm text-gray-500 mb-3">${formattedDate}</p>
+                    <p class="small text-muted mb-2">${formattedDate}</p>
                     
-                    <p class="text-lg text-gray-800 mb-2">${entry.jobType || 'No Job Type'}</p>
+                    <h4 class="h6 text-dark fw-medium mb-3">${entry.jobType || 'No Job Type'}</h4>
                     
                     ${currentUserRole === 'admin' ? `
-                    <p class="text-2xl font-semibold text-gray-900 mb-4">${paymentAmount}</p>
+                    <p class="h4 fw-semibold text-dark mb-3">${paymentAmount}</p>
                     ` : ''}
                     
                     ${entry.jobDescription ? `
-                    <p class="text-sm text-gray-600 italic bg-gray-50 p-3 rounded-md mb-4 whitespace-pre-wrap">${entry.jobDescription}</p>
+                    <p class="small text-muted fst-italic bg-light p-3 rounded-3 mb-3">${entry.jobDescription.replace(/\n/g, '<br>')}</p>
                     ` : ''}
                 </div>
                 
-                <div class="flex justify-end space-x-2 pt-4 border-t border-gray-200">
-                    <!-- CHANGED: Copy button for Admin -->
+                <div class="card-buttons d-flex justify-content-end gap-2 pt-3 border-top mt-auto">
                     ${currentUserRole === 'admin' ? `
-                    <button data-id="${entry.id}" class="copy-btn p-2 rounded-md hover:bg-green-50 transition-colors flex">
-                        <i data-lucide="copy" class="w-5 h-5 pointer-events-none text-green-500 hover:text-green-700">Copy</i>
+                    <button class="btn btn-sm btn-outline-success copy-btn" title="Copy to Clipboard">
+                        <i class="bi bi-clipboard"></i> Copy
                     </button>
                     ` : ''}
-                    <button data-id="${entry.id}" class="edit-btn p-2 rounded-md hover:bg-indigo-50 transition-colors flex">
-                        <i data-lucide="edit-3" class="w-5 h-5 pointer-events-none text-indigo-500 hover:text-indigo-700">Edit</i>
+                    <button class="btn btn-sm btn-outline-primary edit-btn" title="Edit">
+                        <i class="bi bi-pencil-square"></i> Edit
                     </button>
-                    <button data-id="${entry.id}" class="delete-btn p-2 rounded-md hover:bg-red-50 transition-colors flex">
-                        <i data-lucide="trash-2" class="w-5 h-5 pointer-events-none text-red-500 hover:text-red-700">Delete</i>
+                    <button class="btn btn-sm btn-outline-danger delete-btn" title="Delete">
+                        <i class="bi bi-trash"></i> Delete
                     </button>
                 </div>
             `;
 
-    // Add event listeners for buttons
-    card.querySelector('.edit-btn').addEventListener('click', () => handleEdit(entry));
-    card.querySelector('.delete-btn').addEventListener('click', () => handleDeleteEntry(entry.id));
+    // Add event listeners
+    cardBody.querySelector('.edit-btn').addEventListener('click', () => handleEdit(entry));
+    cardBody.querySelector('.delete-btn').addEventListener('click', () => handleDeleteEntry(entry.id));
 
-    // CHANGED: Add copy listener if admin
     if (currentUserRole === 'admin') {
-        const copyBtn = card.querySelector('.copy-btn');
+        const copyBtn = cardBody.querySelector('.copy-btn');
         if (copyBtn) {
             copyBtn.addEventListener('click', () => handleCopyToClipboard(entry));
         }
     }
 
-    return card;
+    card.appendChild(cardBody);
+    col.appendChild(card);
+    return col;
 }
 
 // --- Edit, Copy, and Delete (Log Entries) ---
 
-// CHANGED: New function to copy entry details to clipboard
 function handleCopyToClipboard(entry) {
-    // Format date: YYYY-MM-DD -> DD/MM/YYYY
     const dateParts = (entry.date || '---').split('-');
     const formattedDate = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}` : (entry.date || 'No Date');
 
@@ -611,7 +538,6 @@ function handleCopyToClipboard(entry) {
         minimumFractionDigits: 2
     });
 
-    // Build the text block
     const textToCopy = [
         `Date: ${formattedDate}`,
         `Party Name: ${entry.partyName || ''}`,
@@ -619,14 +545,12 @@ function handleCopyToClipboard(entry) {
         `Description: ${entry.jobDescription || 'N/A'}`,
         `Payment: ${paymentAmount}`,
         `Mode: ${entry.paymentMode || ''}`
-    ].join('\n'); // Join with newlines
+    ].join('\n');
 
-    // Use the clipboard API
     try {
-        // We must use a fallback for `execCommand` as `navigator.clipboard` might be blocked in some iFrames
         const textArea = document.createElement("textarea");
         textArea.value = textToCopy;
-        textArea.style.position = "fixed";  // Make it invisible
+        textArea.style.position = "fixed";
         textArea.style.top = "-9999px";
         textArea.style.left = "-9999px";
         document.body.appendChild(textArea);
@@ -637,13 +561,12 @@ function handleCopyToClipboard(entry) {
             showStatus('Entry copied to clipboard!', 'success');
         } catch (err) {
             console.error('Fallback copy error:', err);
-            showStatus('Failed to copy text.', 'error');
+            showStatus('Failed to copy text.', 'danger');
         }
         document.body.removeChild(textArea);
-
     } catch (err) {
         console.error('Async copy error: ', err);
-        showStatus('Failed to copy text.', 'error');
+        showStatus('Failed to copy text.', 'danger');
     }
 }
 
@@ -664,14 +587,13 @@ function handleEdit(entry) {
 
     formTitle.textContent = "Edit Entry";
     submitBtn.textContent = "Update Entry";
-    cancelEditBtn.classList.remove('hidden');
+    cancelEditBtn.classList.remove('d-none');
 
     showPage('addEntryPage');
 }
 
 // Delete an entry
 async function handleDeleteEntry(id) {
-    // No confirmation for now, as confirm() is blocked
     try {
         const response = await fetch(`${apiUrl}/entry/${id}`, {
             method: 'DELETE',
@@ -681,20 +603,17 @@ async function handleDeleteEntry(id) {
             const data = await response.json();
             throw new Error(data.error || `Server error: ${response.statusText}`);
         }
-
         showStatus("Entry deleted.", 'success');
-
     } catch (error) {
         console.error("Error deleting document: ", error);
-        showStatus(`Error: ${error.message}`, 'error');
+        showStatus(`Error: ${error.message}`, 'danger');
     } finally {
-        fetchLogEntries(); // Manually refresh data
+        fetchLogEntries();
     }
 }
 
 // --- Manage Users Page Logic ---
 
-// Add new user
 addUserForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -704,13 +623,13 @@ addUserForm.addEventListener('submit', async (e) => {
 
     if (!userId || !password) {
         addUserError.textContent = "User ID and Password are required.";
-        addUserError.classList.remove('hidden');
+        addUserError.classList.remove('d-none');
         return;
     }
 
     addUserSubmitBtn.disabled = true;
-    addUserSubmitBtn.textContent = 'Adding...';
-    addUserError.classList.add('hidden');
+    addUserSubmitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Adding...';
+    addUserError.classList.add('d-none');
 
     try {
         const response = await fetch(`${apiUrl}/user`, {
@@ -727,19 +646,18 @@ addUserForm.addEventListener('submit', async (e) => {
 
         showStatus('User added successfully!', 'success');
         addUserForm.reset();
-        fetchUsersList(); // Refresh the list
+        fetchUsersList();
 
     } catch (error) {
         console.error("Error adding user:", error);
         addUserError.textContent = error.message;
-        addUserError.classList.remove('hidden');
+        addUserError.classList.remove('d-none');
     } finally {
         addUserSubmitBtn.disabled = false;
         addUserSubmitBtn.textContent = 'Add User';
     }
 });
 
-// Fetch and display all users
 async function fetchUsersList() {
     try {
         const response = await fetch(`${apiUrl}/users`);
@@ -753,54 +671,52 @@ async function fetchUsersList() {
 
     } catch (error) {
         console.error("Error fetching users:", error);
-        showStatus(`Error: ${error.message}`, 'error');
-        usersListContainer.innerHTML = `<p class="p-6 text-red-500">Could not load users.</p>`;
+        showStatus(`Error: ${error.message}`, 'danger');
+        usersListContainer.innerHTML = `<div class="list-group-item p-4 text-danger">Could not load users.</div>`;
     }
 }
 
-// Render the list of users
 function renderUsersList(users) {
     usersListContainer.innerHTML = ''; // Clear list
     if (users.length === 0) {
-        usersListContainer.innerHTML = `<p class="p-6 text-gray-500">No users found.</p>`;
+        usersListContainer.innerHTML = `<div class="list-group-item p-4 text-muted">No users found.</div>`;
         return;
     }
 
     users.forEach(user => {
         const userEl = document.createElement('div');
-        userEl.className = 'flex items-center justify-between p-4 md:p-6';
+        userEl.className = 'list-group-item list-group-item-action d-flex align-items-center justify-content-between p-3';
 
         const formattedDate = user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-GB') : 'N/A';
 
         userEl.innerHTML = `
                     <div>
-                        <p class="text-lg font-medium text-gray-900">${user.userId}</p>
-                        <p class="text-sm text-gray-500">Role: <span class="font-medium ${user.role === 'admin' ? 'text-indigo-600' : 'text-gray-700'}">${user.role}</span> &bull; Created: ${formattedDate}</p>
+                        <p class="fs-6 fw-medium text-dark mb-0">${user.userId}</p>
+                        <p class="small text-muted mb-0">
+                            Role: <span class="fw-medium ${user.role === 'admin' ? 'text-primary' : 'text-dark'}">${user.role}</span> &bull; Created: ${formattedDate}
+                        </p>
                     </div>
                     ${user.userId !== currentUserId ? `
-                    <button data-id="${user._id}" class="delete-user-btn p-2 rounded-md text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors">
-                        <i data-lucide="trash-2" class="w-5 h-5 pointer-events-none"></i>
+                    <button data-id="${user._id}" class="btn btn-sm btn-outline-danger delete-user-btn" title="Delete User">
+                        <i class="bi bi-trash"></i>
                     </button>
                     ` : `
-                    <span class="text-sm text-gray-400 italic">(Current User)</span>
+                    <span class="badge bg-light text-dark-emphasis border">(Current User)</span>
                     `}
                 `;
 
-        // Add delete listener if the button exists
         const deleteBtn = userEl.querySelector('.delete-user-btn');
         if (deleteBtn) {
-            deleteBtn.addEventListener('click', () => handleDeleteUser(user._id));
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent parent click
+                handleDeleteUser(user._id);
+            });
         }
 
         usersListContainer.appendChild(userEl);
     });
-
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-    }
 }
 
-// Delete a user
 async function handleDeleteUser(id) {
     try {
         const response = await fetch(`${apiUrl}/user/${id}`, {
@@ -817,7 +733,7 @@ async function handleDeleteUser(id) {
 
     } catch (error) {
         console.error("Error deleting user: ", error);
-        showStatus(`Error: ${error.message}`, 'error');
+        showStatus(`Error: ${error.message}`, 'danger');
     } finally {
         fetchUsersList(); // Refresh list
     }
@@ -827,21 +743,26 @@ async function handleDeleteUser(id) {
 // --- Utility ---
 
 // Show status bar message
-function showStatus(message, type = 'success') {
-    authStatus.textContent = message;
-    statusMessage.classList.remove('hidden');
+function showStatus(message, type = 'success', autoHide = true) {
+    const alertType = type === 'success' ? 'alert-success' : 'alert-danger';
+    const alert = document.createElement('div');
+    alert.className = `alert ${alertType} alert-dismissible fade show m-0 border-0`;
+    alert.role = 'alert';
 
-    if (type === 'error') {
-        statusMessage.classList.add('bg-red-100', 'text-red-800', 'border-red-300');
-        statusMessage.classList.remove('bg-green-100', 'text-green-800', 'border-green-300');
-    } else {
-        statusMessage.classList.add('bg-green-100', 'text-green-800', 'border-green-300');
-        statusMessage.classList.remove('bg-red-100', 'text-red-800', 'border-red-300');
+    alert.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+
+    statusMessageContainer.innerHTML = ''; // Clear old alerts
+    statusMessageContainer.appendChild(alert);
+
+    if (autoHide) {
+        setTimeout(() => {
+            const alertInstance = bootstrap.Alert.getOrCreateInstance(alert);
+            if (alertInstance) {
+                alertInstance.close();
+            }
+        }, 3000);
     }
-
-    // Auto-hide after 3 seconds
-    setTimeout(() => {
-        statusMessage.classList.add('hidden');
-    }, 3000);
 }
-
