@@ -1,51 +1,44 @@
- /* Base styles */
- body {
-     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-     /* New "awesome" gradient background */
-     background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-     min-height: 100vh;
- }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+}
 
- /* Custom scrollbar */
- ::-webkit-scrollbar {
-     width: 8px;
- }
+::-webkit-scrollbar {
+    width: 8px;
+}
 
- ::-webkit-scrollbar-track {
-     background: #f1f5f9;
-     border-radius: 10px;
- }
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 10px;
+}
 
- ::-webkit-scrollbar-thumb {
-     background: rgba(79, 70, 229, 0.5);
-     /* Using the old indigo color for this */
-     border-radius: 10px;
- }
+::-webkit-scrollbar-thumb {
+    background: rgba(79, 70, 229, 0.5);
+    border-radius: 10px;
+}
 
- ::-webkit-scrollbar-thumb:hover {
-     background: rgba(79, 70, 229, 0.7);
- }
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(79, 70, 229, 0.7);
+}
 
- /* Helper for main content area to fill height */
- #mainAppContainer {
-     display: flex;
-     flex-direction: column;
-     min-height: 100vh;
- }
+#mainAppContainer {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
 
- main {
-     flex: 1;
-     overflow-y: auto;
- }
+main {
+    flex: 1;
+    overflow-y: auto;
+}
 
- /* Make card buttons smaller */
- .card-buttons .btn {
-     --bs-btn-padding-y: .2rem;
-     --bs-btn-padding-x: .4rem;
-     --bs-btn-font-size: .8rem;
- }
+.card-buttons .btn {
+    --bs-btn-padding-y: .2rem;
+    --bs-btn-padding-x: .4rem;
+    --bs-btn-font-size: .8rem;
+}
 
- /* Ensure login overlay is full height */
- #loginOverlay {
-     min-height: 100vh;
- }
+#loginOverlay {
+    min-height: 100vh;
+}
