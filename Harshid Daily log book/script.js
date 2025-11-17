@@ -1,18 +1,17 @@
-// --- App Configuration ---
-const apiUrl = 'https://harshid-engravers.onrender.com/api'; // Our backend server
+const apiUrl = 'https://harshid-engravers.onrender.com/api';
+let allLogEntries = []; 
+let currentEditId = null;
+let currentUserRole = null;
+let currentUserId = null;
 
-// --- Global Variables ---
-let allLogEntries = []; // Local cache for all entries
-let currentEditId = null; // To track editing
-let currentUserRole = null; // 'admin' or 'user'
-let currentUserId = null; // The logged-in user's ID string
-
-// Bootstrap Tab instances
+// Bootstrap
 let loginTab = new bootstrap.Tab(document.getElementById('sign-in-tab'));
 let registerTab = new bootstrap.Tab(document.getElementById('register-tab'));
 let mainNavbarCollapse = new bootstrap.Collapse(document.getElementById('mainNavbar'), { toggle: false });
 
-// --- DOM Elements ---
+
+
+
 const loginOverlay = document.getElementById('loginOverlay');
 const loginForm = document.getElementById('loginForm');
 const userIdInput = document.getElementById('userId');
@@ -55,7 +54,8 @@ const totalAmountEl = document.getElementById('totalAmount');
 const searchInput = document.getElementById('search');
 const sortSelect = document.getElementById('sort');
 
-// Manage Users Page Elements
+
+
 const addUserForm = document.getElementById('addUserForm');
 const newUserIdInput = document.getElementById('newUserId');
 const newUserPasswordInput = document.getElementById('newUserPassword');
@@ -64,10 +64,6 @@ const addUserError = document.getElementById('addUserError');
 const addUserSubmitBtn = document.getElementById('addUserSubmitBtn');
 const usersListContainer = document.getElementById('usersListContainer');
 
-
-// --- Login / Register Handling ---
-
-// Clear errors when switching tabs
 document.getElementById('sign-in-tab').addEventListener('shown.bs.tab', clearLoginErrors);
 document.getElementById('register-tab').addEventListener('shown.bs.tab', clearLoginErrors);
 
@@ -79,7 +75,6 @@ function clearLoginErrors() {
     loginForm.reset();
 }
 
-// Handle Login
 loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const enteredUserId = userIdInput.value.trim();
@@ -102,7 +97,6 @@ loginForm.addEventListener('submit', async (e) => {
             throw new Error(data.error || 'Login failed');
         }
 
-        // Successful login
         currentUserRole = data.role;
         currentUserId = data.userId;
 
@@ -126,7 +120,6 @@ loginForm.addEventListener('submit', async (e) => {
     }
 });
 
-// Handle Registration
 registerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const userId = newRegisterUserIdInput.value.trim();
@@ -163,14 +156,12 @@ registerForm.addEventListener('submit', async (e) => {
         if (!response.ok) {
             throw new Error(data.error || 'Registration failed');
         }
-
-        // Success!
         registerSuccess.textContent = 'Account created! Please sign in.';
         registerSuccess.classList.remove('d-none');
         registerForm.reset();
 
         setTimeout(() => {
-            loginTab.show(); // Switch to login tab
+            loginTab.show();
         }, 2000);
 
     } catch (error) {
@@ -183,22 +174,19 @@ registerForm.addEventListener('submit', async (e) => {
 });
 
 
-// --- Role-Based UI Control ---
 function setUIVisibilityByRole() {
     const adminElements = document.querySelectorAll('.role-admin-only');
 
     if (currentUserRole === 'admin') {
         adminElements.forEach(el => {
-            el.style.display = null; // Clear inline style to restore default
+            el.style.display = null;
         });
-    } else { // 'user' role
+    } else {
         adminElements.forEach(el => el.style.display = 'none');
     }
-    // After roles are set, we must hide all pages except the default
     showPage('logEntriesPage');
 }
 
-// --- Page Navigation ---
 function showPage(pageId) {
     document.querySelectorAll('.page-content').forEach(page => {
         page.classList.add('d-none');
@@ -210,10 +198,9 @@ function showPage(pageId) {
     }
 
     if (pageId === 'manageUsersPage') {
-        fetchUsersList(); // Refresh user list every time we visit
+        fetchUsersList();
     }
 
-    // Highlight active nav link
     document.querySelectorAll('.nav-link').forEach(link => {
         link.classList.remove('active', 'fw-bold');
         if (link.dataset.page === pageId) {
@@ -221,10 +208,6 @@ function showPage(pageId) {
         }
     });
 }
-
-// --- Event Listeners for Navigation ---
-
-// Listen for all page navigation clicks (desktop and mobile)
 document.querySelectorAll('[data-page]').forEach(link => {
     link.addEventListener('click', (e) => {
         const pageId = e.currentTarget.dataset.page;
@@ -234,31 +217,29 @@ document.querySelectorAll('[data-page]').forEach(link => {
         }
 
         showPage(pageId);
-        mainNavbarCollapse.hide(); // Close mobile menu on click
+        mainNavbarCollapse.hide();
     });
 });
-
-// Listen for all sign out clicks (desktop and mobile)
 document.querySelectorAll('[data-action="signOut"]').forEach(link => {
     link.addEventListener('click', () => {
         handleSignOut();
-        mainNavbarCollapse.hide(); // Close mobile menu on click
+        mainNavbarCollapse.hide();
     });
 });
 
-// Cancel Edit button
+
 cancelEditBtn.addEventListener('click', () => {
     resetForm();
     showPage('logEntriesPage');
 });
 
-// --- Sign Out ---
+
 function handleSignOut() {
     mainAppContainer.classList.add('d-none');
     loginOverlay.classList.remove('d-none');
 
     clearLoginErrors();
-    loginTab.show(); // Reset to login tab
+    loginTab.show();
 
     currentUserRole = null;
     currentUserId = null;
@@ -270,11 +251,10 @@ function handleSignOut() {
     usersListContainer.innerHTML = '';
     mainNavbarCollapse.hide();
 
-    statusMessageContainer.innerHTML = ''; // Clear status bar
+    statusMessageContainer.innerHTML = '';
 }
 
 
-// --- Form Handling ---
 logForm.addEventListener('submit', handleFormSubmit);
 
 async function handleFormSubmit(e) {
@@ -337,7 +317,6 @@ async function handleFormSubmit(e) {
     }
 }
 
-// Reset form to default state
 function resetForm() {
     logForm.reset();
     currentEditId = null;
@@ -352,8 +331,6 @@ function resetForm() {
         });
     }
 }
-
-// --- Data Fetching and Rendering (Log Entries) ---
 
 async function fetchLogEntries() {
     try {
@@ -374,16 +351,13 @@ async function fetchLogEntries() {
     }
 }
 
-// --- Search and Sort Listeners ---
 searchInput.addEventListener('input', renderLogEntries);
 sortSelect.addEventListener('change', renderLogEntries);
 
-// Render entries based on search and sort
 function renderLogEntries() {
     let filteredEntries = [...allLogEntries];
     const searchTerm = searchInput.value.toLowerCase();
 
-    // 1. Filter
     if (searchTerm) {
         filteredEntries = filteredEntries.filter(entry => {
             const paymentString = (entry.payment || '0').toString().toLowerCase();
@@ -397,7 +371,6 @@ function renderLogEntries() {
         });
     }
 
-    // 2. Sort
     const sortValue = sortSelect.value;
     switch (sortValue) {
         case 'date-desc':
@@ -423,8 +396,6 @@ function renderLogEntries() {
             }
             break;
     }
-
-    // 3. Render
     logEntriesContainer.innerHTML = '';
     if (filteredEntries.length === 0) {
         noEntriesMessage.classList.remove('d-none');
@@ -433,7 +404,7 @@ function renderLogEntries() {
 
         let lastDate = null;
         const showDateDividers = sortValue.startsWith('date-');
-        const colWrapper = document.createElement('div'); // Create a temporary wrapper
+        const colWrapper = document.createElement('div');
         colWrapper.className = 'col-12';
 
         filteredEntries.forEach(entry => {
@@ -445,21 +416,18 @@ function renderLogEntries() {
             }
 
             const card = createEntryCard(entry);
-            logEntriesContainer.appendChild(card); // Append card directly to grid
+            logEntriesContainer.appendChild(card);
         });
     }
 
-    // 4. Update Total
     if (currentUserRole === 'admin') {
         const total = filteredEntries.reduce((sum, entry) => sum + (entry.payment || 0), 0);
         totalAmountEl.textContent = `₹${total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     }
 }
 
-// Create HTML for a single entry card
 function createEntryCard(entry) {
     const col = document.createElement('div');
-    // col.className = 'col'; // Bootstrap grid handles this
 
     const card = document.createElement('div');
     card.className = 'card shadow-sm border-0 h-100';
@@ -510,7 +478,6 @@ function createEntryCard(entry) {
                 </div>
             `;
 
-    // Add event listeners
     cardBody.querySelector('.edit-btn').addEventListener('click', () => handleEdit(entry));
     cardBody.querySelector('.delete-btn').addEventListener('click', () => handleDeleteEntry(entry.id));
 
@@ -526,7 +493,6 @@ function createEntryCard(entry) {
     return col;
 }
 
-// --- Edit, Copy, and Delete (Log Entries) ---
 
 function handleCopyToClipboard(entry) {
     const dateParts = (entry.date || '---').split('-');
@@ -570,7 +536,6 @@ function handleCopyToClipboard(entry) {
     }
 }
 
-// Populate form for editing
 function handleEdit(entry) {
     currentEditId = entry.id;
     entryIdInput.value = entry.id;
@@ -592,7 +557,6 @@ function handleEdit(entry) {
     showPage('addEntryPage');
 }
 
-// Delete an entry
 async function handleDeleteEntry(id) {
     try {
         const response = await fetch(`${apiUrl}/entry/${id}`, {
@@ -612,7 +576,6 @@ async function handleDeleteEntry(id) {
     }
 }
 
-// --- Manage Users Page Logic ---
 
 addUserForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -677,7 +640,7 @@ async function fetchUsersList() {
 }
 
 function renderUsersList(users) {
-    usersListContainer.innerHTML = ''; // Clear list
+    usersListContainer.innerHTML = '';
     if (users.length === 0) {
         usersListContainer.innerHTML = `<div class="list-group-item p-4 text-muted">No users found.</div>`;
         return;
@@ -708,7 +671,7 @@ function renderUsersList(users) {
         const deleteBtn = userEl.querySelector('.delete-user-btn');
         if (deleteBtn) {
             deleteBtn.addEventListener('click', (e) => {
-                e.stopPropagation(); // Prevent parent click
+                e.stopPropagation();
                 handleDeleteUser(user._id);
             });
         }
@@ -735,14 +698,10 @@ async function handleDeleteUser(id) {
         console.error("Error deleting user: ", error);
         showStatus(`Error: ${error.message}`, 'danger');
     } finally {
-        fetchUsersList(); // Refresh list
+        fetchUsersList();
     }
 }
 
-
-// --- Utility ---
-
-// Show status bar message
 function showStatus(message, type = 'success', autoHide = true) {
     const alertType = type === 'success' ? 'alert-success' : 'alert-danger';
     const alert = document.createElement('div');
@@ -754,7 +713,7 @@ function showStatus(message, type = 'success', autoHide = true) {
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             `;
 
-    statusMessageContainer.innerHTML = ''; // Clear old alerts
+    statusMessageContainer.innerHTML = '';
     statusMessageContainer.appendChild(alert);
 
     if (autoHide) {
