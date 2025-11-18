@@ -42,3 +42,9 @@ main {
 #loginOverlay {
     min-height: 100vh;
 }
+
+#loginSubmitBtn
+{
+    background-color: brown;
+    color: #f1f5f9;
+}
